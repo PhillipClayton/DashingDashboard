@@ -1,0 +1,22 @@
+{
+  "name": "dashing-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kiosk-style home dashboard with carousel",
+  "scripts": {
+    "build": "npm run build --prefix frontend",
+    "start": "cd server && node index.js",
+    "dev": "npm run dev --prefix frontend & node server/index.js",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:server": "node server/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
