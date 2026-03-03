@@ -94,3 +94,11 @@ export interface Course {
 export interface StudentConfig {
   students: Array<{ id: number; displayName?: string }>;
 }
+
+/** From TubularTutor /students API (shape may vary) */
+export interface TubularStudent {
+  id: number;
+  username?: string;
+  display_name?: string;
+  name?: string;
+}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api, apiWithAuth, type ChoresData, type SchoolworkData, type ShoppingData, type ProjectsData } from '../api';
+import { api, apiWithAuth, type ChoresData, type SchoolworkData, type ShoppingData, type ProjectsData, type StudentConfig, type TubularStudent } from '../api';
 
 const AUTH_KEY = 'dashing_admin_token';
 
@@ -7,7 +7,7 @@ export default function Admin() {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(AUTH_KEY));
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [activeTab, setActiveTab] = useState<'chores' | 'schoolwork' | 'shopping' | 'projects'>('chores');
+  const [activeTab, setActiveTab] = useState<'chores' | 'schoolwork' | 'shopping' | 'projects' | 'progress'>('chores');
 
   useEffect(() => {
     if (token) localStorage.setItem(AUTH_KEY, token);
@@ -90,11 +90,19 @@ export default function Admin() {
         >
           Projects
         </button>
+        <button
+          type="button"
+          className={activeTab === 'progress' ? 'admin__tab--active' : ''}
+          onClick={() => setActiveTab('progress')}
+        >
+          Progress
+        </button>
       </nav>
       {activeTab === 'chores' && <AdminChores token={token} />}
       {activeTab === 'schoolwork' && <AdminSchoolwork token={token} />}
       {activeTab === 'shopping' && <AdminShopping token={token} />}
       {activeTab === 'projects' && <AdminProjects token={token} />}
+      {activeTab === 'progress' && <AdminProgress token={token} />}
     </div>
   );
 }
@@ -515,6 +523,119 @@ function AdminProjects({ token }: { token: string }) {
       </ul>
       <button type="button" onClick={addProject}>Add project</button>
       <button type="button" onClick={save}>Save</button>
+      {message && <span className="admin__message">{message}</span>}
+      {error && <span className="admin__error">{error}</span>}
+    </section>
+  );
+}
+
+function AdminProgress({ token }: { token: string }) {
+  const [tubularList, setTubularList] = useState<TubularStudent[]>([]);
+  const [config, setConfig] = useState<StudentConfig | null>(null);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const authed = apiWithAuth(token);
+
+  const load = () => {
+    setLoading(true);
+    setError('');
+    Promise.all([
+      api<TubularStudent[] | { students?: TubularStudent[] }>('/api/students').then((raw) => {
+        const list = Array.isArray(raw) ? raw : (raw?.students ?? []);
+        setTubularList(list);
+      }),
+      api<StudentConfig>('/api/config/students').then(setConfig),
+    ]).catch((e) => setError(e instanceof Error ? e.message : 'Failed to load')).finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const save = async () => {
+    if (!config) return;
+    setError('');
+    setMessage('');
+    try {
+      await authed('/api/config/students', { method: 'PUT', body: JSON.stringify(config) });
+      setMessage('Saved. Progress slide will show these students.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Save failed');
+    }
+  };
+
+  const addStudent = (s: TubularStudent) => {
+    if (!config) return;
+    const displayName = s.display_name || s.username || s.name || `Student ${s.id}`;
+    if (config.students.some((x) => x.id === s.id)) return;
+    setConfig({ students: [...config.students, { id: s.id, displayName }] });
+  };
+
+  const removeStudent = (id: number) => {
+    if (!config) return;
+    setConfig({ students: config.students.filter((x) => x.id !== id) });
+  };
+
+  const updateDisplayName = (id: number, displayName: string) => {
+    if (!config) return;
+    setConfig({
+      students: config.students.map((x) => (x.id === id ? { ...x, displayName } : x)),
+    });
+  };
+
+  const label = (s: TubularStudent) => s.display_name || s.username || s.name || `ID ${s.id}`;
+
+  if (loading && !config) return <p>Loading…</p>;
+  if (error && !config) return <p className="admin__error">{error}</p>;
+
+  const current = config?.students ?? [];
+
+  return (
+    <section className="admin__section">
+      <h2>Progress slide students</h2>
+      <p>Choose which TubularTutor / TheLearningMatrix students appear on the progress slide. You can see their IDs here and add them without editing the database.</p>
+
+      <h3>Students on progress slide</h3>
+      {current.length === 0 ? (
+        <p className="admin__muted">None yet. Add from the list below.</p>
+      ) : (
+        <ul className="admin__list">
+          {current.map((s) => (
+            <li key={s.id}>
+              <span className="admin__progress-id">ID {s.id}</span>
+              <input
+                value={s.displayName ?? ''}
+                onChange={(e) => updateDisplayName(s.id, e.target.value)}
+                placeholder="Display name"
+              />
+              <button type="button" onClick={() => removeStudent(s.id)}>Remove</button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h3>All students from TubularTutor</h3>
+      {tubularList.length === 0 ? (
+        <p className="admin__muted">No students returned. Check TUBULAR_TUTOR_ADMIN_TOKEN and that TubularTutor is running.</p>
+      ) : (
+        <ul className="admin__list">
+          {tubularList.map((s) => (
+            <li key={s.id}>
+              <span className="admin__progress-id">ID {s.id}</span>
+              <span>{label(s)}</span>
+              {current.some((c) => c.id === s.id) ? (
+                <span className="admin__message">On slide</span>
+              ) : (
+                <button type="button" onClick={() => addStudent(s)}>Add to slide</button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <button type="button" onClick={load}>Refresh list</button>
+      <button type="button" onClick={save} disabled={!config}>Save</button>
       {message && <span className="admin__message">{message}</span>}
       {error && <span className="admin__error">{error}</span>}
     </section>

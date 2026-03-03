@@ -453,3 +453,16 @@ body {
   color: #8c8;
   margin-left: 0.5rem;
 }
+
+.admin__muted {
+  color: #888;
+  font-style: italic;
+}
+
+.admin__progress-id {
+  display: inline-block;
+  min-width: 3.5em;
+  font-family: ui-monospace, monospace;
+  font-size: 0.9em;
+  color: #aaa;
+}
