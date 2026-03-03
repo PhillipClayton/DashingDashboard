@@ -11,31 +11,37 @@ const FALLBACK_WORDS = [
   { word: 'resilient', definition: 'Able to withstand or recover quickly from difficulty.', example: 'Children are often remarkably resilient.' },
 ];
 
+const MAX_WORD_ATTEMPTS = 5;
+
 router.get('/', async (req, res) => {
   const key = CACHE_KEY();
   if (cache.key === key && cache.data) {
     return res.json(cache.data);
   }
   try {
-    const resp = await fetch('https://random-word-api.herokuapp.com/word');
-    if (!resp.ok) throw new Error('Word API error');
-    const [word] = await resp.json();
-    if (!word) throw new Error('No word');
-    const defResp = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-    let definition = '';
-    let example = '';
-    if (defResp.ok) {
-      const entries = await defResp.json();
-      const first = entries[0];
-      if (first?.meanings?.[0]?.definitions?.[0]) {
-        definition = first.meanings[0].definitions[0].definition || '';
-        example = first.meanings[0].definitions[0].example || '';
+    for (let attempt = 0; attempt < MAX_WORD_ATTEMPTS; attempt++) {
+      const resp = await fetch('https://random-word-api.herokuapp.com/word');
+      if (!resp.ok) throw new Error('Word API error');
+      const [word] = await resp.json();
+      if (!word) continue;
+      const defResp = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      let definition = '';
+      let example = '';
+      if (defResp.ok) {
+        const entries = await defResp.json();
+        const first = entries[0];
+        if (first?.meanings?.[0]?.definitions?.[0]) {
+          definition = first.meanings[0].definitions[0].definition || '';
+          example = first.meanings[0].definitions[0].example || '';
+        }
+      }
+      if (definition) {
+        const data = { word, definition, example };
+        cache = { key, data };
+        return res.json(data);
       }
     }
-    if (!definition) definition = '(definition not found)';
-    const data = { word, definition, example };
-    cache = { key, data };
-    res.json(data);
+    throw new Error('No word with definition found');
   } catch {
     const one = FALLBACK_WORDS[Math.floor(Math.random() * FALLBACK_WORDS.length)];
     cache = { key, data: one };

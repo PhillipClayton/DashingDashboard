@@ -15,6 +15,7 @@ export default function SlideWord() {
 
   if (error) return <div className="slide__error">{error}</div>;
   if (!data) return <div className="slide__loading">Loading word…</div>;
+  if (!data.definition?.trim()) return <div className="slide__loading">Loading word…</div>;
 
   return (
     <div className="slide__content slide-word">

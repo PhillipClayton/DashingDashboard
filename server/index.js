@@ -49,3 +49,21 @@ if (fs.existsSync(distPath)) {
 app.listen(PORT, () => {
   console.log(`Dashing Dashboard server on http://localhost:${PORT}`);
 });
+
+// Keep TubularTutor (and its Neon DB) from going idle: ping every 10 minutes when configured
+const KEEPALIVE_INTERVAL_MS = 10 * 60 * 1000;
+const TUBULAR_BASE = process.env.TUBULAR_TUTOR_URL || 'https://tubulartutor.onrender.com';
+const TUBULAR_TOKEN = process.env.TUBULAR_TUTOR_ADMIN_TOKEN;
+
+if (TUBULAR_TOKEN) {
+  setInterval(async () => {
+    try {
+      const res = await fetch(`${TUBULAR_BASE}/students`, {
+        headers: { Authorization: `Bearer ${TUBULAR_TOKEN}` },
+      });
+      if (!res.ok) console.warn('TubularTutor keepalive got', res.status);
+    } catch (err) {
+      console.warn('TubularTutor keepalive failed:', err.message);
+    }
+  }, KEEPALIVE_INTERVAL_MS);
+}

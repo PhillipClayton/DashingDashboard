@@ -135,8 +135,8 @@ export default function SlideProgress() {
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'));
   }, [refreshTick]);
 
-  if (error) return <div className="slide__error">{error}</div>;
-  if (students.length === 0) return <div className="slide__empty">No students configured for progress.</div>;
+  if (error) return <div className="slide__error">Progress temporarily unavailable. {error}</div>;
+  if (students.length === 0) return <div className="slide__empty">No students configured. Add <code>data/students.json</code> with TubularTutor student IDs (see README).</div>;
 
   return (
     <div className="slide__content slide-progress">

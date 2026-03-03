@@ -50,7 +50,9 @@ A kiosk-style home dashboard that displays chores, schoolwork lists, student pro
    }
    ```
 
-   Up to four entries are used for the 2×2 progress grid.
+   Up to four entries are used for the 2×2 progress grid. If the progress slide shows "No students configured", create this file (or add entries to it).
+
+   When `TUBULAR_TUTOR_ADMIN_TOKEN` is set, the server pings TubularTutor every 10 minutes so the backend (and its Neon database) stay awake and avoid cold-start delays.
 
 4. **Build and run**
 
