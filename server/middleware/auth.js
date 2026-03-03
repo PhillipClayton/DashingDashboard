@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 
-const SECRET = process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_PASSWORD || 'fallback-secret';
+function getSecret() {
+  return process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_PASSWORD || 'fallback-secret';
+}
 
 export function requireAdmin(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -9,7 +11,7 @@ export function requireAdmin(req, res, next) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   try {
-    const decoded = jwt.verify(token, SECRET);
+    const decoded = jwt.verify(token, getSecret());
     if (decoded?.admin !== true) {
       return res.status(401).json({ error: 'Invalid token' });
     }
