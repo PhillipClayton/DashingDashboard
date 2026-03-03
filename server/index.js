@@ -54,14 +54,30 @@ app.listen(PORT, () => {
 const KEEPALIVE_INTERVAL_MS = 10 * 60 * 1000;
 const TUBULAR_BASE = process.env.TUBULAR_TUTOR_URL || 'https://tubulartutor.onrender.com';
 const TUBULAR_TOKEN = process.env.TUBULAR_TUTOR_ADMIN_TOKEN;
+const TUBULAR_USER = process.env.TUBULAR_TUTOR_USERNAME;
+const TUBULAR_PASS = process.env.TUBULAR_TUTOR_PASSWORD;
 
-if (TUBULAR_TOKEN) {
+if (TUBULAR_TOKEN || (TUBULAR_USER && TUBULAR_PASS)) {
   setInterval(async () => {
     try {
-      const res = await fetch(`${TUBULAR_BASE}/students`, {
-        headers: { Authorization: `Bearer ${TUBULAR_TOKEN}` },
-      });
-      if (!res.ok) console.warn('TubularTutor keepalive got', res.status);
+      let token = TUBULAR_TOKEN;
+      if (!token && TUBULAR_USER && TUBULAR_PASS) {
+        const loginRes = await fetch(`${TUBULAR_BASE}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: TUBULAR_USER, password: TUBULAR_PASS }),
+        });
+        if (loginRes.ok) {
+          const data = await loginRes.json();
+          token = data.token;
+        }
+      }
+      if (token) {
+        const res = await fetch(`${TUBULAR_BASE}/api/admin/students`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) console.warn('TubularTutor keepalive got', res.status);
+      }
     } catch (err) {
       console.warn('TubularTutor keepalive failed:', err.message);
     }

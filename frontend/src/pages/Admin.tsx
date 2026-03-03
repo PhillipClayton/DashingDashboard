@@ -541,7 +541,7 @@ function AdminProgress({ token }: { token: string }) {
     setLoading(true);
     setError('');
     Promise.all([
-      api<TubularStudent[] | { students?: TubularStudent[] }>('/api/students').then((raw) => {
+      api<TubularStudent[] | { students?: TubularStudent[] }>('/api/admin/students').then((raw) => {
         const list = Array.isArray(raw) ? raw : (raw?.students ?? []);
         setTubularList(list);
       }),

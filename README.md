@@ -29,8 +29,10 @@ A kiosk-style home dashboard that displays chores, schoolwork lists, student pro
 
    Copy `.env.example` to `.env` and set:
 
-   - `TUBULAR_TUTOR_URL` – TubularTutor API base (e.g. `https://tubulartutor.onrender.com`)
-   - `TUBULAR_TUTOR_ADMIN_TOKEN` – Bearer token for admin (students + progress)
+   - `TUBULAR_TUTOR_URL` – TubularTutor/TheLearningMatrix API base (e.g. `https://tubulartutor.onrender.com`)
+   - **TubularTutor auth** (pick one):  
+     - `TUBULAR_TUTOR_ADMIN_TOKEN` – Bearer token (the token you get after logging into TheLearningMatrix admin), or  
+     - `TUBULAR_TUTOR_USERNAME` and `TUBULAR_TUTOR_PASSWORD` – your TheLearningMatrix admin login; the server will log in to get a token
    - `ADMIN_PASSWORD` – Password for the dashboard admin UI (chores, schoolwork, shopping)
    - `PORT` – Server port (default `3001`)
    - `DATA_DIR` – Directory for JSON data (default `./data`)
@@ -52,7 +54,7 @@ A kiosk-style home dashboard that displays chores, schoolwork lists, student pro
 
    Up to four entries are used for the 2×2 progress grid. If the progress slide shows "No students configured", create this file (or add entries to it).
 
-   When `TUBULAR_TUTOR_ADMIN_TOKEN` is set, the server pings TubularTutor every 10 minutes so the backend (and its Neon database) stay awake and avoid cold-start delays.
+   When TubularTutor auth is configured (token or username+password), the server pings TubularTutor every 10 minutes so the backend (and its Neon database) stay awake and avoid cold-start delays.
 
 4. **Build and run**
 
