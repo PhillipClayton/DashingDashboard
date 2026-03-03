@@ -7,7 +7,7 @@ const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min
 let cache = { data: null, at: 0 };
 
 async function fetchWeather() {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_100m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_100m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=auto`;
   const res = await fetch(url);
   if (!res.ok) throw new Error('Weather API error');
   return res.json();

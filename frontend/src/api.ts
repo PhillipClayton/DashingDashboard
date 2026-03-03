@@ -54,6 +54,10 @@ export interface ShoppingData {
   items: ShoppingItem[];
 }
 
+export interface ProjectsData {
+  projects: Array<{ id: string; label: string }>;
+}
+
 export interface WeatherData {
   current?: { temp?: number; humidity?: number; weatherCode?: number };
   daily?: { date?: string; tempMax?: number; tempMin?: number; precipChance?: number };

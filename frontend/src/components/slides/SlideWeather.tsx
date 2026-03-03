@@ -46,7 +46,7 @@ export default function SlideWeather() {
       <h2 className="slide__title">Weather today</h2>
       <div className="slide-weather__main">
         {cur?.temp != null && (
-          <p className="slide-weather__temp">{Math.round(cur.temp)}°</p>
+          <p className="slide-weather__temp">{Math.round(cur.temp)}°F</p>
         )}
         {cur?.weatherCode != null && (
           <p className="slide-weather__conditions">{weatherLabel(cur.weatherCode)}</p>
@@ -57,8 +57,8 @@ export default function SlideWeather() {
       </div>
       {daily && (daily.tempMax != null || daily.tempMin != null) && (
         <div className="slide-weather__daily">
-          <span>H {daily.tempMax != null ? Math.round(daily.tempMax) : '—'}°</span>
-          <span>L {daily.tempMin != null ? Math.round(daily.tempMin) : '—'}°</span>
+          <span>H {daily.tempMax != null ? Math.round(daily.tempMax) : '—'}°F</span>
+          <span>L {daily.tempMin != null ? Math.round(daily.tempMin) : '—'}°F</span>
           {daily.precipChance != null && (
             <span>{daily.precipChance}% precip</span>
           )}

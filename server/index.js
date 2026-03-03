@@ -11,6 +11,7 @@ import configRoutes from './routes/config.js';
 import choresRoutes from './routes/chores.js';
 import schoolworkRoutes from './routes/schoolwork.js';
 import shoppingRoutes from './routes/shopping.js';
+import projectsRoutes from './routes/projects.js';
 import proxyRoutes from './routes/proxy.js';
 import weatherRoutes from './routes/weather.js';
 import jokeRoutes from './routes/joke.js';
@@ -29,6 +30,7 @@ app.use('/api/config', configRoutes);
 app.use('/api/chores', choresRoutes);
 app.use('/api/schoolwork', schoolworkRoutes);
 app.use('/api/shopping', shoppingRoutes);
+app.use('/api/projects', projectsRoutes);
 app.use('/api', proxyRoutes); // /api/students, /api/progress
 app.use('/api/weather', weatherRoutes);
 app.use('/api/joke', jokeRoutes);

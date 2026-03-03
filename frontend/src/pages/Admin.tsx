@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api, apiWithAuth, type ChoresData, type SchoolworkData, type ShoppingData } from '../api';
+import { api, apiWithAuth, type ChoresData, type SchoolworkData, type ShoppingData, type ProjectsData } from '../api';
 
 const AUTH_KEY = 'dashing_admin_token';
 
@@ -7,7 +7,7 @@ export default function Admin() {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(AUTH_KEY));
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [activeTab, setActiveTab] = useState<'chores' | 'schoolwork' | 'shopping'>('chores');
+  const [activeTab, setActiveTab] = useState<'chores' | 'schoolwork' | 'shopping' | 'projects'>('chores');
 
   useEffect(() => {
     if (token) localStorage.setItem(AUTH_KEY, token);
@@ -83,10 +83,18 @@ export default function Admin() {
         >
           Shopping
         </button>
+        <button
+          type="button"
+          className={activeTab === 'projects' ? 'admin__tab--active' : ''}
+          onClick={() => setActiveTab('projects')}
+        >
+          Projects
+        </button>
       </nav>
       {activeTab === 'chores' && <AdminChores token={token} />}
       {activeTab === 'schoolwork' && <AdminSchoolwork token={token} />}
       {activeTab === 'shopping' && <AdminShopping token={token} />}
+      {activeTab === 'projects' && <AdminProjects token={token} />}
     </div>
   );
 }
@@ -430,6 +438,83 @@ function AdminShopping({ token }: { token: string }) {
           </li>
         ))}
       </ul>
+      {message && <span className="admin__message">{message}</span>}
+      {error && <span className="admin__error">{error}</span>}
+    </section>
+  );
+}
+
+function AdminProjects({ token }: { token: string }) {
+  const [data, setData] = useState<ProjectsData | null>(null);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const authed = apiWithAuth(token);
+
+  useEffect(() => {
+    api<ProjectsData>('/api/projects')
+      .then(setData)
+      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'));
+  }, []);
+
+  const save = async () => {
+    if (!data) return;
+    setError('');
+    setMessage('');
+    try {
+      const toSave = {
+        ...data,
+        projects: (data.projects ?? []).filter((p) => p.label.trim() !== ''),
+      };
+      await authed('/api/projects', { method: 'PUT', body: JSON.stringify(toSave) });
+      setData(toSave);
+      setMessage('Saved.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Save failed');
+    }
+  };
+
+  const addProject = () => {
+    if (!data) return;
+    const projects = [...(data.projects ?? []), { id: `p${Date.now()}`, label: '' }];
+    setData({ ...data, projects });
+  };
+
+  const updateProject = (index: number, label: string) => {
+    if (!data) return;
+    const projects = [...(data.projects ?? [])];
+    projects[index] = { ...projects[index], label };
+    setData({ ...data, projects });
+  };
+
+  const removeProject = (index: number) => {
+    if (!data) return;
+    const projects = (data.projects ?? []).filter((_, i) => i !== index);
+    setData({ ...data, projects });
+  };
+
+  if (error && !data) return <p className="admin__error">{error}</p>;
+  if (!data) return <p>Loading…</p>;
+
+  const projects = data.projects ?? [];
+
+  return (
+    <section className="admin__section">
+      <h2>Home improvement projects</h2>
+      <p>Add or edit project names. They will appear on the dashboard slide.</p>
+      <ul className="admin__list">
+        {projects.map((project, i) => (
+          <li key={project.id}>
+            <input
+              value={project.label}
+              onChange={(e) => updateProject(i, e.target.value)}
+              placeholder="Project name"
+            />
+            <button type="button" onClick={() => removeProject(i)}>Remove</button>
+          </li>
+        ))}
+      </ul>
+      <button type="button" onClick={addProject}>Add project</button>
+      <button type="button" onClick={save}>Save</button>
       {message && <span className="admin__message">{message}</span>}
       {error && <span className="admin__error">{error}</span>}
     </section>
