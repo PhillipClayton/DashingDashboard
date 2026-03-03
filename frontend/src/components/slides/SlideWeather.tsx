@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, type WeatherData } from '../../api';
+import { useRefreshTick } from '../../contexts/RefreshContext';
 
 const WEATHER_CODES: Record<number, string> = {
   0: 'Clear',
@@ -26,12 +27,13 @@ function weatherLabel(code: number): string {
 export default function SlideWeather() {
   const [data, setData] = useState<WeatherData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const refreshTick = useRefreshTick();
 
   useEffect(() => {
     api<WeatherData>('/api/weather')
       .then(setData)
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'));
-  }, []);
+  }, [refreshTick]);
 
   if (error) return <div className="slide__error">{error}</div>;
   if (!data) return <div className="slide__loading">Loading weather…</div>;

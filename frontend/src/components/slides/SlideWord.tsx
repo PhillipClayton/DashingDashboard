@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { api, type WordData } from '../../api';
+import { useRefreshTick } from '../../contexts/RefreshContext';
 
 export default function SlideWord() {
   const [data, setData] = useState<WordData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const refreshTick = useRefreshTick();
 
   useEffect(() => {
     api<WordData>('/api/word')
       .then(setData)
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'));
-  }, []);
+  }, [refreshTick]);
 
   if (error) return <div className="slide__error">{error}</div>;
   if (!data) return <div className="slide__loading">Loading word…</div>;

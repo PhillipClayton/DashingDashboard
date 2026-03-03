@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Carousel from '../components/Carousel';
+import { RefreshProvider } from '../contexts/RefreshContext';
 import SlideChores from '../components/slides/SlideChores';
 import SlideSchoolwork from '../components/slides/SlideSchoolwork';
 import SlideProgress from '../components/slides/SlideProgress';
@@ -31,8 +32,9 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="dashboard">
-      <Carousel
+    <RefreshProvider>
+      <div className="dashboard">
+        <Carousel
         currentIndex={index}
         total={slides.length}
         onSelect={setIndex}
@@ -43,11 +45,22 @@ export default function Dashboard() {
             className="slide"
             data-active={i === index}
             aria-hidden={i !== index}
+            onClick={() => setIndex((prev) => (prev + 1) % slides.length)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setIndex((prev) => (prev + 1) % slides.length);
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label="Next slide"
           >
             <Component />
           </div>
         ))}
-      </Carousel>
-    </div>
+        </Carousel>
+      </div>
+    </RefreshProvider>
   );
 }

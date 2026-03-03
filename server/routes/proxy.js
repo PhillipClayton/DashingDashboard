@@ -1,21 +1,27 @@
 import { Router } from 'express';
 
 const router = Router();
-const BASE = process.env.TUBULAR_TUTOR_URL || 'https://tubulartutor.onrender.com';
-const TOKEN = process.env.TUBULAR_TUTOR_ADMIN_TOKEN;
+
+function getProxyConfig() {
+  return {
+    base: process.env.TUBULAR_TUTOR_URL || 'https://tubulartutor.onrender.com',
+    token: process.env.TUBULAR_TUTOR_ADMIN_TOKEN,
+  };
+}
 
 async function proxy(req, res) {
-  if (!TOKEN) {
+  const { base, token } = getProxyConfig();
+  if (!token) {
     return res.status(503).json({ error: 'TubularTutor not configured' });
   }
   const path = req.path.replace(/^\/api/, '');
-  const url = `${BASE}${path}`;
+  const url = `${base}${path}`;
   try {
     const resp = await fetch(url, {
       method: req.method,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${TOKEN}`,
+        Authorization: `Bearer ${token}`,
         ...(req.headers['content-type'] && { 'Content-Type': req.headers['content-type'] }),
       },
       body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,

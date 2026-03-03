@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { api, type ShoppingData } from '../../api';
+import { useRefreshTick } from '../../contexts/RefreshContext';
 
 export default function SlideShopping() {
   const [data, setData] = useState<ShoppingData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const refreshTick = useRefreshTick();
 
   useEffect(() => {
     api<ShoppingData>('/api/shopping')
       .then(setData)
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'));
-  }, []);
+  }, [refreshTick]);
 
   if (error) return <div className="slide__error">{error}</div>;
   if (!data) return <div className="slide__loading">Loading shopping list…</div>;

@@ -16,6 +16,7 @@ import { Line } from 'react-chartjs-2';
 
 ChartJS.register(TimeScale, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 import { api, type StudentConfig, type ProgressRecord, type Course } from '../../api';
+import { useRefreshTick } from '../../contexts/RefreshContext';
 
 const ON_TRACK_START = new Date('2025-08-13T00:00:00Z').getTime();
 const ON_TRACK_END = new Date('2026-05-22T00:00:00Z').getTime();
@@ -105,6 +106,7 @@ function ProgressChart({
 export default function SlideProgress() {
   const [students, setStudents] = useState<StudentProgress[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const refreshTick = useRefreshTick();
 
   useEffect(() => {
     api<StudentConfig>('/api/config/students')
@@ -131,7 +133,7 @@ export default function SlideProgress() {
         setStudents(results);
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'));
-  }, []);
+  }, [refreshTick]);
 
   if (error) return <div className="slide__error">{error}</div>;
   if (students.length === 0) return <div className="slide__empty">No students configured for progress.</div>;
