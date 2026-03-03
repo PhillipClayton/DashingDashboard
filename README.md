@@ -59,7 +59,16 @@ A kiosk-style home dashboard that displays chores, schoolwork lists, student pro
    npm start
    ```
 
-   Open `http://localhost:3001` (or `http://<lan-server-ip>:3001`) for the dashboard. Open `http://localhost:3001/admin` on another device to log in and edit chores, schoolwork, and shopping.
+   Open `http://localhost:3010` (or whatever `PORT` is in `.env`; default in this repo is 3010) for the dashboard. Open `http://localhost:3010/admin` on another device to log in and edit chores, schoolwork, and shopping.
+
+   **After changing frontend or server code**, rebuild and restart:
+
+   ```bash
+   npm run build
+   npm start
+   ```
+
+   If you use **dev mode** (`npm run dev`), the frontend (Vite) hot-reloads; you still need to restart the server if you changed server code.
 
 ## Development
 

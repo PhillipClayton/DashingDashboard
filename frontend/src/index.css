@@ -37,6 +37,7 @@ body {
   width: 100%;
   height: 100%;
   transition: transform 0.5s ease-in-out;
+  cursor: pointer;
 }
 
 .carousel__track .slide {

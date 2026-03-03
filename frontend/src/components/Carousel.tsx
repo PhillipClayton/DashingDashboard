@@ -4,15 +4,26 @@ type Props = {
   currentIndex: number;
   total: number;
   onSelect?: (index: number) => void;
+  onTrackClick?: () => void;
   children: ReactNode;
 };
 
-export default function Carousel({ currentIndex, total, onSelect, children }: Props) {
+export default function Carousel({ currentIndex, total, onSelect, onTrackClick, children }: Props) {
   return (
     <div className="carousel">
       <div
         className="carousel__track"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        onClick={onTrackClick}
+        role="button"
+        tabIndex={0}
+        aria-label="Next slide"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onTrackClick?.();
+          }
+        }}
       >
         {children}
       </div>

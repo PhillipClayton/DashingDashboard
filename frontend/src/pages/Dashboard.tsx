@@ -35,30 +35,21 @@ export default function Dashboard() {
     <RefreshProvider>
       <div className="dashboard">
         <Carousel
-        currentIndex={index}
-        total={slides.length}
-        onSelect={setIndex}
-      >
-        {slides.map(({ id, Component }, i) => (
-          <div
-            key={id}
-            className="slide"
-            data-active={i === index}
-            aria-hidden={i !== index}
-            onClick={() => setIndex((prev) => (prev + 1) % slides.length)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setIndex((prev) => (prev + 1) % slides.length);
-              }
-            }}
-            role="button"
-            tabIndex={0}
-            aria-label="Next slide"
-          >
-            <Component />
-          </div>
-        ))}
+          currentIndex={index}
+          total={slides.length}
+          onSelect={setIndex}
+          onTrackClick={() => setIndex((prev) => (prev + 1) % slides.length)}
+        >
+          {slides.map(({ id, Component }, i) => (
+            <div
+              key={id}
+              className="slide"
+              data-active={i === index}
+              aria-hidden={i !== index}
+            >
+              <Component />
+            </div>
+          ))}
         </Carousel>
       </div>
     </RefreshProvider>

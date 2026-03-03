@@ -108,21 +108,60 @@ function AdminChores({ token }: { token: string }) {
     setError('');
     setMessage('');
     try {
-      await authed('/api/chores', { method: 'PUT', body: JSON.stringify(data) });
+      const toSave = {
+        ...data,
+        people: (data.people ?? []).map((p) => ({
+          ...p,
+          tasks: (p.tasks ?? []).filter((t) => t.trim() !== ''),
+        })),
+      };
+      await authed('/api/chores', { method: 'PUT', body: JSON.stringify(toSave) });
+      setData(toSave);
       setMessage('Saved.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed');
     }
   };
 
-  const updatePerson = (index: number, field: 'name' | 'tasks', value: string | string[]) => {
+  const updatePerson = (index: number, value: string) => {
     if (!data) return;
     const people = [...(data.people ?? [])];
     while (people.length <= index) {
       people.push({ id: `p${people.length}`, name: '', tasks: [] });
     }
-    if (field === 'name') people[index] = { ...people[index], name: value as string };
-    else people[index] = { ...people[index], tasks: value as string[] };
+    people[index] = { ...people[index], name: value };
+    setData({ ...data, people });
+  };
+
+  const addTask = (personIndex: number) => {
+    if (!data) return;
+    const people = [...(data.people ?? [])];
+    const p = people[personIndex];
+    if (!p) return;
+    const tasks = [...(p.tasks ?? []), ''];
+    people[personIndex] = { ...p, tasks };
+    setData({ ...data, people });
+  };
+
+  const updateTask = (personIndex: number, taskIndex: number, value: string) => {
+    if (!data) return;
+    const people = [...(data.people ?? [])];
+    const p = people[personIndex];
+    if (!p) return;
+    const tasks = [...(p.tasks ?? [])];
+    while (tasks.length <= taskIndex) tasks.push('');
+    tasks[taskIndex] = value;
+    people[personIndex] = { ...p, tasks };
+    setData({ ...data, people });
+  };
+
+  const removeTask = (personIndex: number, taskIndex: number) => {
+    if (!data) return;
+    const people = [...(data.people ?? [])];
+    const p = people[personIndex];
+    if (!p) return;
+    const tasks = (p.tasks ?? []).filter((_, i) => i !== taskIndex);
+    people[personIndex] = { ...p, tasks };
     setData({ ...data, people });
   };
 
@@ -148,26 +187,30 @@ function AdminChores({ token }: { token: string }) {
   return (
     <section className="admin__section">
       <h2>Chores</h2>
-      <p>Edit names and task lists for each person (e.g. 4 people).</p>
+      <p>Edit names and add/remove tasks for each person (e.g. 4 people).</p>
       {people.map((p, i) => (
         <div key={p.id} className="admin__block">
           <label>
             Name
             <input
               value={p.name}
-              onChange={(e) => updatePerson(i, 'name', e.target.value)}
+              onChange={(e) => updatePerson(i, e.target.value)}
               placeholder="Person name"
             />
           </label>
-          <label>
-            Tasks (one per line)
-            <textarea
-              value={(p.tasks ?? []).join('\n')}
-              onChange={(e) => updatePerson(i, 'tasks', e.target.value.split('\n').filter(Boolean))}
-              placeholder="Task 1&#10;Task 2"
-              rows={3}
-            />
-          </label>
+          <ul className="admin__list">
+            {(p.tasks ?? []).map((task, ti) => (
+              <li key={ti}>
+                <input
+                  value={task}
+                  onChange={(e) => updateTask(i, ti, e.target.value)}
+                  placeholder="Chore or task"
+                />
+                <button type="button" onClick={() => removeTask(i, ti)}>Remove</button>
+              </li>
+            ))}
+          </ul>
+          <button type="button" onClick={() => addTask(i)}>Add task</button>
         </div>
       ))}
       <button type="button" onClick={() => setData({ ...data, people: [...people, { id: `p${people.length}`, name: '', tasks: [] }] })}>
