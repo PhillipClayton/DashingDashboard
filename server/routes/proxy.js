@@ -3,19 +3,20 @@ import { Router } from 'express';
 const router = Router();
 
 function getConfig() {
+  const adminToken = (process.env.TUBULAR_TUTOR_ADMIN_TOKEN || '').trim();
   return {
-    base: process.env.TUBULAR_TUTOR_URL || 'https://tubulartutor.onrender.com',
-    adminToken: process.env.TUBULAR_TUTOR_ADMIN_TOKEN,
-    username: process.env.TUBULAR_TUTOR_USERNAME,
-    password: process.env.TUBULAR_TUTOR_PASSWORD,
+    base: (process.env.TUBULAR_TUTOR_URL || 'https://tubulartutor.onrender.com').replace(/\/$/, ''),
+    adminToken: adminToken || null,
+    username: (process.env.TUBULAR_TUTOR_USERNAME || '').trim() || null,
+    password: (process.env.TUBULAR_TUTOR_PASSWORD || '').trim() || null,
   };
 }
 
 let cachedToken = null;
 
-async function getToken() {
+async function getToken(forceLogin = false) {
   const { base, adminToken, username, password } = getConfig();
-  if (adminToken) return adminToken;
+  if (adminToken && !forceLogin) return adminToken;
   if (username && password) {
     if (cachedToken) return cachedToken;
     const res = await fetch(`${base}/api/auth/login`, {
@@ -54,9 +55,9 @@ async function proxy(req, res) {
       },
       body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
     });
-    if (resp.status === 401 && config.username && config.password && !config.adminToken) {
+    if (resp.status === 401 && config.username && config.password) {
       cachedToken = null;
-      const newToken = await getToken();
+      const newToken = await getToken(true);
       if (newToken) {
         resp = await fetch(`${config.base}/api${path}`, {
           method: req.method,
