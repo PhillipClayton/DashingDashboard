@@ -36,6 +36,18 @@ export interface ChoresData {
   people?: Array<{ id: string; name: string; tasks?: string[] }>;
 }
 
+export interface TodoItem {
+  id: string;
+  text: string;
+  done: boolean;
+  /** 1 = high, 2 = normal, 3 = low */
+  priority: number;
+  order: number;
+}
+export interface TodoData {
+  items: TodoItem[];
+}
+
 export interface SchoolworkStudent {
   id: string;
   name: string;
