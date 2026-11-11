@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Carousel from '../components/Carousel';
 import { RefreshProvider } from '../contexts/RefreshContext';
-import SlideChores from '../components/slides/SlideChores';
+import SlideTodo from '../components/slides/SlideTodo';
 import SlideSchoolwork from '../components/slides/SlideSchoolwork';
 import SlideProgress from '../components/slides/SlideProgress';
 import SlideShopping from '../components/slides/SlideShopping';
@@ -13,7 +13,7 @@ import SlideWord from '../components/slides/SlideWord';
 const SLIDE_INTERVAL_MS = 25000;
 
 const slides = [
-  { id: 'chores', title: 'Chores', Component: SlideChores },
+  { id: 'todo', title: 'To Do', Component: SlideTodo },
   { id: 'schoolwork', title: 'Schoolwork', Component: SlideSchoolwork },
   { id: 'progress', title: 'Progress', Component: SlideProgress },
   { id: 'shopping', title: 'Shopping', Component: SlideShopping },
