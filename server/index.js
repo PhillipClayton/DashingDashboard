@@ -17,10 +17,15 @@ import proxyRoutes from './routes/proxy.js';
 import weatherRoutes from './routes/weather.js';
 import jokeRoutes from './routes/joke.js';
 import wordRoutes from './routes/word.js';
+import dailyRoutes from './routes/daily.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
+const hasTubularTutor = Boolean(
+  (process.env.TUBULAR_TUTOR_ADMIN_TOKEN || '').trim() ||
+  ((process.env.TUBULAR_TUTOR_USERNAME || '').trim() && (process.env.TUBULAR_TUTOR_PASSWORD || '').trim())
+);
 
 app.set('dataDir', DATA_DIR);
 app.use(express.json());
@@ -33,10 +38,12 @@ app.use('/api/todo', todoRoutes);
 app.use('/api/schoolwork', schoolworkRoutes);
 app.use('/api/shopping', shoppingRoutes);
 app.use('/api/projects', projectsRoutes);
-app.use('/api', proxyRoutes); // /api/students, /api/progress
+app.use('/api', proxyRoutes); // TubularTutor progress endpoints return a helpful 503 when unconfigured
 app.use('/api/weather', weatherRoutes);
 app.use('/api/joke', jokeRoutes);
 app.use('/api/word', wordRoutes);
+app.use('/api/daily', dailyRoutes);
+app.get('/api/dashboard-config', (_req, res) => res.json({ tubularTutorEnabled: hasTubularTutor }));
 
 // Static frontend (after build)
 const distPath = path.join(__dirname, '..', 'frontend', 'dist');
@@ -52,14 +59,14 @@ app.listen(PORT, () => {
   console.log(`Dashing Dashboard server on http://localhost:${PORT}`);
 });
 
-// Keep TubularTutor (and its Neon DB) from going idle: ping every 10 minutes when configured
+// Keep TubularTutor (and its Neon DB) awake only when credentials are configured.
 const KEEPALIVE_INTERVAL_MS = 10 * 60 * 1000;
 const TUBULAR_BASE = process.env.TUBULAR_TUTOR_URL || 'https://tubulartutor.onrender.com';
 const TUBULAR_TOKEN = process.env.TUBULAR_TUTOR_ADMIN_TOKEN;
 const TUBULAR_USER = process.env.TUBULAR_TUTOR_USERNAME;
 const TUBULAR_PASS = process.env.TUBULAR_TUTOR_PASSWORD;
 
-if (TUBULAR_TOKEN || (TUBULAR_USER && TUBULAR_PASS)) {
+if (hasTubularTutor) {
   setInterval(async () => {
     try {
       let token = TUBULAR_TOKEN;
@@ -75,10 +82,10 @@ if (TUBULAR_TOKEN || (TUBULAR_USER && TUBULAR_PASS)) {
         }
       }
       if (token) {
-        const res = await fetch(`${TUBULAR_BASE}/api/admin/students`, {
+        const response = await fetch(`${TUBULAR_BASE}/api/admin/students`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) console.warn('TubularTutor keepalive got', res.status);
+        if (!response.ok) console.warn('TubularTutor keepalive got', response.status);
       }
     } catch (err) {
       console.warn('TubularTutor keepalive failed:', err.message);
