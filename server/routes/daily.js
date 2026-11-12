@@ -41,8 +41,9 @@ function decodeHtml(value = '') {
   return value
     .replace(/&#(\d+);/g, (_match, code) => String.fromCodePoint(Number(code)))
     .replace(/&#x([\da-f]+);/gi, (_match, code) => String.fromCodePoint(parseInt(code, 16)))
-    .replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#039;|&apos;/g, "'")
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    .replace(/&quot;/g, '"').replace(/&#039;|&apos;/g, "'")
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
 }
 
 async function getJson(url) {
