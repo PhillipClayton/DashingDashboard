@@ -36,8 +36,8 @@ body {
 .slide__error { color: #e88; }
 
 /* To Do slide */
-.slide-todo__list { list-style: none; max-width: 900px; max-height: 72vh; overflow: auto; margin: 0 auto; padding: 0; font-size: clamp(1rem, 1.8vw, 1.5rem); }
-.slide-todo__item { display: flex; align-items: center; gap: 1rem; padding: 0.8rem 1rem; border-bottom: 1px solid rgba(255,255,255,.12); }
+.slide-todo__list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr)); gap: 0 1.5rem; list-style: none; width: 100%; max-width: 1600px; max-height: none; overflow: visible; margin: 0 auto; padding: 0; font-size: clamp(1rem, 1.35vw, 1.25rem); }
+.slide-todo__item { display: flex; align-items: center; gap: .75rem; padding: .4rem .5rem; border-bottom: 1px solid rgba(255,255,255,.12); }
 .slide-todo__priority { width: .75rem; height: .75rem; flex: 0 0 .75rem; border-radius: 50%; background: #85b7d5; }
 .slide-todo__priority--1 { background: #f07878; }
 .slide-todo__priority--3 { background: #8b8b9b; }
