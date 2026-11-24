@@ -7,88 +7,37 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 import authRoutes from './routes/auth.js';
-import configRoutes from './routes/config.js';
-import choresRoutes from './routes/chores.js';
 import todoRoutes from './routes/todo.js';
-import schoolworkRoutes from './routes/schoolwork.js';
 import shoppingRoutes from './routes/shopping.js';
-import projectsRoutes from './routes/projects.js';
-import proxyRoutes from './routes/proxy.js';
 import weatherRoutes from './routes/weather.js';
 import jokeRoutes from './routes/joke.js';
 import wordRoutes from './routes/word.js';
-import dailyRoutes from './routes/daily.js';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = Number(process.env.PORT) || 3001;
+const HOST = process.env.HOST || '0.0.0.0';
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
-const hasTubularTutor = Boolean(
-  (process.env.TUBULAR_TUTOR_ADMIN_TOKEN || '').trim() ||
-  ((process.env.TUBULAR_TUTOR_USERNAME || '').trim() && (process.env.TUBULAR_TUTOR_PASSWORD || '').trim())
-);
 
 app.set('dataDir', DATA_DIR);
 app.use(express.json());
 
-// API routes (GET endpoints public; mutating routes protected in their routers)
+// The read-only dashboard is available on the LAN; list changes require admin authentication.
 app.use('/api/auth', authRoutes);
-app.use('/api/config', configRoutes);
-app.use('/api/chores', choresRoutes);
 app.use('/api/todo', todoRoutes);
-app.use('/api/schoolwork', schoolworkRoutes);
 app.use('/api/shopping', shoppingRoutes);
-app.use('/api/projects', projectsRoutes);
-app.use('/api', proxyRoutes); // TubularTutor progress endpoints return a helpful 503 when unconfigured
 app.use('/api/weather', weatherRoutes);
 app.use('/api/joke', jokeRoutes);
 app.use('/api/word', wordRoutes);
-app.use('/api/daily', dailyRoutes);
-app.get('/api/dashboard-config', (_req, res) => res.json({ tubularTutorEnabled: hasTubularTutor }));
 
-// Static frontend (after build)
 const distPath = path.join(__dirname, '..', 'frontend', 'dist');
 const distIndex = path.join(distPath, 'index.html');
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
-  app.get('*', (req, res) => res.sendFile(distIndex));
+  app.get('*', (_req, res) => res.sendFile(distIndex));
 } else {
   app.get('/', (_req, res) => res.send('<p>Run <code>npm run build</code> then restart the server.</p>'));
 }
 
-app.listen(PORT, () => {
-  console.log(`Dashing Dashboard server on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Dashing Dashboard available at http://${HOST}:${PORT} (use this machine's LAN address or hostname from other devices)`);
 });
-
-// Keep TubularTutor (and its Neon DB) awake only when credentials are configured.
-const KEEPALIVE_INTERVAL_MS = 10 * 60 * 1000;
-const TUBULAR_BASE = process.env.TUBULAR_TUTOR_URL || 'https://tubulartutor.onrender.com';
-const TUBULAR_TOKEN = process.env.TUBULAR_TUTOR_ADMIN_TOKEN;
-const TUBULAR_USER = process.env.TUBULAR_TUTOR_USERNAME;
-const TUBULAR_PASS = process.env.TUBULAR_TUTOR_PASSWORD;
-
-if (hasTubularTutor) {
-  setInterval(async () => {
-    try {
-      let token = TUBULAR_TOKEN;
-      if (!token && TUBULAR_USER && TUBULAR_PASS) {
-        const loginRes = await fetch(`${TUBULAR_BASE}/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: TUBULAR_USER, password: TUBULAR_PASS }),
-        });
-        if (loginRes.ok) {
-          const data = await loginRes.json();
-          token = data.token;
-        }
-      }
-      if (token) {
-        const response = await fetch(`${TUBULAR_BASE}/api/admin/students`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!response.ok) console.warn('TubularTutor keepalive got', response.status);
-      }
-    } catch (err) {
-      console.warn('TubularTutor keepalive failed:', err.message);
-    }
-  }, KEEPALIVE_INTERVAL_MS);
-}
