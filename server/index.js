@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -18,10 +19,28 @@ const PORT = Number(process.env.PORT) || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 120,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too many requests' },
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts' },
+});
+
 app.set('dataDir', DATA_DIR);
 app.use(express.json());
 
 // The read-only dashboard is available on the LAN; list changes require admin authentication.
+app.use('/api/auth/login', loginLimiter);
+app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/todo', todoRoutes);
 app.use('/api/shopping', shoppingRoutes);
