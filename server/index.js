@@ -52,7 +52,8 @@ const distPath = path.join(__dirname, '..', 'frontend', 'dist');
 const distIndex = path.join(distPath, 'index.html');
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
-  app.get('*', (_req, res) => res.sendFile(distIndex));
+  // Rate-limit the SPA fallback too; it is outside the /api middleware chain.
+  app.get('*', apiLimiter, (_req, res) => res.sendFile(distIndex));
 } else {
   app.get('/', (_req, res) => res.send('<p>Run <code>npm run build</code> then restart the server.</p>'));
 }
