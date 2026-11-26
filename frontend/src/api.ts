@@ -1,25 +1,50 @@
 const API_BASE = import.meta.env.VITE_API_BASE ?? '';
 
-export async function api<T>(path: string, options?: RequestInit): Promise<T> {
+export interface RetryOptions {
+  retries?: number;
+  retryDelayMs?: number;
+}
+
+export async function api<T>(
+  path: string,
+  options?: RequestInit,
+  retryOptions?: RetryOptions,
+): Promise<T> {
   const url = `${API_BASE}${path}`;
-  const res = await fetch(url, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-  });
-  const text = await res.text();
-  if (!res.ok) {
-    let msg = 'Request failed';
+  const retries = retryOptions?.retries ?? 3;
+  const retryDelayMs = retryOptions?.retryDelayMs ?? 3000;
+
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const data = JSON.parse(text);
-      msg = data?.error ?? msg;
-    } catch {}
-    throw new Error(msg);
+      const res = await fetch(url, {
+        ...options,
+        headers: { 'Content-Type': 'application/json', ...options?.headers },
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        let msg = 'Request failed';
+        try {
+          const data = JSON.parse(text);
+          msg = data?.error ?? msg;
+        } catch {}
+        throw new Error(msg);
+      }
+      try {
+        return JSON.parse(text) as T;
+      } catch {
+        return text as unknown as T;
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs * (attempt + 1)));
+      }
+    }
   }
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    return text as unknown as T;
-  }
+
+  throw lastError instanceof Error ? lastError : new Error('Request failed');
 }
 
 export function apiWithAuth(token: string) {
@@ -70,18 +95,23 @@ export interface ProjectsData {
   projects: Array<{ id: string; label: string }>;
 }
 
-export interface WeatherData {
-  current?: { temp?: number; humidity?: number; weatherCode?: number };
-  daily?: { date?: string; tempMax?: number; tempMin?: number; precipChance?: number };
+export interface UpdatedData {
+  updatedAt?: string;
 }
 
-export interface JokeData {
+export interface WeatherData extends UpdatedData {
+  current?: { temp?: number; humidity?: number; weatherCode?: number };
+  daily?: { date?: string; tempMax?: number; tempMin?: number; precipChance?: number };
+  stale?: boolean;
+}
+
+export interface JokeData extends UpdatedData {
   setup?: string;
   delivery?: string;
   title?: string;
 }
 
-export interface WordData {
+export interface WordData extends UpdatedData {
   word: string;
   definition: string;
   example: string;

@@ -62,9 +62,10 @@ async function cachedForToday(name, fetcher, fallback) {
     console.warn(`${name} source unavailable; using fallback:`, error.message);
     data = fallback;
   }
+  const result = { ...data, updatedAt: new Date().toISOString() };
   DAILY_CACHE.clear();
-  DAILY_CACHE.set(key, data);
-  return data;
+  DAILY_CACHE.set(key, result);
+  return result;
 }
 
 router.get('/fact', async (_req, res) => {

@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
   try {
     // JokeAPI: safe-mode, family/clean categories
     const url = 'https://v2.jokeapi.dev/joke/Any?safe-mode&type=twopart';
-    const resp = await fetch(url);
+    const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!resp.ok) throw new Error('Joke API error');
     const raw = await resp.json();
     if (raw.error === true || (raw.flags && (raw.flags.nsfw || raw.flags.racist || raw.flags.sexist))) {
@@ -38,6 +38,7 @@ router.get('/', async (req, res) => {
       setup: raw.setup || '',
       delivery: raw.delivery || raw.joke || '',
       title: 'Joke of the day',
+      updatedAt: new Date().toISOString(),
     };
     cache = { key, data };
     res.json(data);
@@ -45,8 +46,8 @@ router.get('/', async (req, res) => {
     const fallback = await readFallbackJokes(req);
     const one = fallback.length ? fallback[Math.floor(Math.random() * fallback.length)] : { setup: 'No joke today.', delivery: '', title: 'Joke of the day' };
     const data = typeof one === 'string' ? { setup: one, delivery: '', title: 'Joke of the day' } : one;
-    cache = { key, data };
-    res.json(data);
+    cache = { key, data: { ...data, updatedAt: new Date().toISOString() } };
+    res.json(cache.data);
   }
 });
 

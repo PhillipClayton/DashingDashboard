@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, type WeatherData } from '../../api';
 import { useRefreshTick } from '../../contexts/RefreshContext';
+import SlideUpdatedAt from './SlideUpdatedAt';
 
 const WEATHER_CODES: Record<number, string> = {
   0: 'Clear',
@@ -31,11 +32,14 @@ export default function SlideWeather() {
 
   useEffect(() => {
     api<WeatherData>('/api/weather')
-      .then(setData)
+      .then((response) => {
+        setData(response);
+        setError(null);
+      })
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load'));
   }, [refreshTick]);
 
-  if (error) return <div className="slide__error">{error}</div>;
+  if (error && !data) return <div className="slide__error">{error}</div>;
   if (!data) return <div className="slide__loading">Loading weather…</div>;
 
   const cur = data.current;
@@ -44,6 +48,7 @@ export default function SlideWeather() {
   return (
     <div className="slide__content slide-weather">
       <h2 className="slide__title">Weather today</h2>
+      {error && <p className="slide__meta">Refresh failed: {error}</p>}
       <div className="slide-weather__main">
         {cur?.temp != null && (
           <p className="slide-weather__temp">{Math.round(cur.temp)}°F</p>
@@ -64,6 +69,7 @@ export default function SlideWeather() {
           )}
         </div>
       )}
+      <SlideUpdatedAt updatedAt={data.updatedAt} stale={data.stale} />
     </div>
   );
 }

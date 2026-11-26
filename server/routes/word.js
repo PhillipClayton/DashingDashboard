@@ -13,18 +13,18 @@ const FALLBACK_WORDS = [
 
 const MAX_WORD_ATTEMPTS = 5;
 
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   const key = CACHE_KEY();
   if (cache.key === key && cache.data) {
     return res.json(cache.data);
   }
   try {
     for (let attempt = 0; attempt < MAX_WORD_ATTEMPTS; attempt++) {
-      const resp = await fetch('https://random-word-api.herokuapp.com/word');
+      const resp = await fetch('https://random-word-api.herokuapp.com/word', { signal: AbortSignal.timeout(8000) });
       if (!resp.ok) throw new Error('Word API error');
       const [word] = await resp.json();
       if (!word) continue;
-      const defResp = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      const defResp = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`, { signal: AbortSignal.timeout(8000) });
       let definition = '';
       let example = '';
       if (defResp.ok) {
@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
         }
       }
       if (definition) {
-        const data = { word, definition, example };
+        const data = { word, definition, example, updatedAt: new Date().toISOString() };
         cache = { key, data };
         return res.json(data);
       }
@@ -44,8 +44,9 @@ router.get('/', async (req, res) => {
     throw new Error('No word with definition found');
   } catch {
     const one = FALLBACK_WORDS[Math.floor(Math.random() * FALLBACK_WORDS.length)];
-    cache = { key, data: one };
-    res.json(one);
+    const data = { ...one, updatedAt: new Date().toISOString() };
+    cache = { key, data };
+    res.json(data);
   }
 });
 

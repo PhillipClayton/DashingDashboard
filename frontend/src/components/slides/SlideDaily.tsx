@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
 import { useRefreshTick } from '../../contexts/RefreshContext';
+import SlideUpdatedAt from './SlideUpdatedAt';
 
 type Kind = 'fact' | 'quote' | 'puzzle' | 'math';
 type DailyContent = {
@@ -12,6 +13,7 @@ type DailyContent = {
   title?: string;
   source?: string;
   sourceUrl?: string;
+  updatedAt?: string;
 };
 
 const content = {
@@ -32,16 +34,20 @@ export default function SlideDaily({ kind }: { kind: Kind }) {
     setError('');
     setRevealed(false);
     api<DailyContent>(`/api/daily/${item.endpoint}`)
-      .then(setData)
+      .then((response) => {
+        setData(response);
+        setError('');
+      })
       .catch((e) => setError(e instanceof Error ? e.message : 'Daily content unavailable'));
   }, [item.endpoint, refreshTick]);
 
-  if (error) return <div className="slide__error">Daily content is temporarily unavailable. {error}</div>;
+  if (error && !data) return <div className="slide__error">Daily content is temporarily unavailable. {error}</div>;
   if (!data) return <div className="slide__loading">Loading {item.title.toLowerCase()}…</div>;
 
   return (
     <div className="slide__content slide-daily">
       <h2 className="slide__title">{item.title}</h2>
+      {error && <p className="slide__meta">Refresh failed: {error}</p>}
       {kind === 'fact' && <p className="slide-daily__text">{data.text}</p>}
       {kind === 'quote' && <blockquote className="slide-daily__text">“{data.quote}”<footer>— {data.author}</footer></blockquote>}
       {kind === 'puzzle' && (
@@ -62,6 +68,7 @@ export default function SlideDaily({ kind }: { kind: Kind }) {
       {data.sourceUrl ? (
         <p className="slide-daily__source">Source: <a href={data.sourceUrl} target="_blank" rel="noreferrer">{data.source}</a></p>
       ) : <p className="slide-daily__source">{data.source}</p>}
+      <SlideUpdatedAt updatedAt={data.updatedAt} />
     </div>
   );
 }
