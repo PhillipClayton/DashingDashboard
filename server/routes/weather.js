@@ -8,15 +8,15 @@ let cache = { data: null, at: 0 };
 
 async function fetchWeather() {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_100m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=auto`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error('Weather API error');
   return res.json();
 }
 
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   const now = Date.now();
   if (cache.data && now - cache.at < CACHE_TTL_MS) {
-    return res.json(cache.data);
+    return res.json({ ...cache.data, updatedAt: new Date(cache.at).toISOString(), stale: false });
   }
   try {
     const raw = await fetchWeather();
@@ -35,13 +35,16 @@ router.get('/', async (req, res) => {
           humidity: current.relative_humidity_100m,
           weatherCode: current.weather_code,
         },
-        daily: daily,
+        daily,
       },
-      at: now,
+      at: Date.now(),
     };
-    res.json(cache.data);
+    res.json({ ...cache.data, updatedAt: new Date(cache.at).toISOString(), stale: false });
   } catch (err) {
-    res.status(502).json({ error: err.message || 'Weather unavailable' });
+    if (cache.data) {
+      return res.json({ ...cache.data, updatedAt: new Date(cache.at).toISOString(), stale: true });
+    }
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Weather unavailable' });
   }
 });
 

@@ -23,7 +23,6 @@ export async function api<T>(
         headers: { 'Content-Type': 'application/json', ...options?.headers },
       });
       const text = await res.text();
-
       if (!res.ok) {
         let msg = 'Request failed';
         try {
@@ -32,7 +31,6 @@ export async function api<T>(
         } catch {}
         throw new Error(msg);
       }
-
       try {
         return JSON.parse(text) as T;
       } catch {
@@ -97,18 +95,23 @@ export interface ProjectsData {
   projects: Array<{ id: string; label: string }>;
 }
 
-export interface WeatherData {
-  current?: { temp?: number; humidity?: number; weatherCode?: number };
-  daily?: { date?: string; tempMax?: number; tempMin?: number; precipChance?: number };
+export interface UpdatedData {
+  updatedAt?: string;
 }
 
-export interface JokeData {
+export interface WeatherData extends UpdatedData {
+  current?: { temp?: number; humidity?: number; weatherCode?: number };
+  daily?: { date?: string; tempMax?: number; tempMin?: number; precipChance?: number };
+  stale?: boolean;
+}
+
+export interface JokeData extends UpdatedData {
   setup?: string;
   delivery?: string;
   title?: string;
 }
 
-export interface WordData {
+export interface WordData extends UpdatedData {
   word: string;
   definition: string;
   example: string;
